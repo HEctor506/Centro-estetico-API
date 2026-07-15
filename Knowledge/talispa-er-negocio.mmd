@@ -1,0 +1,130 @@
+%% ============================================================
+%%  TALISPA — Diagrama ER de la base de datos (núcleo operativo)
+%%  Esquema: public · Postgres / Supabase
+%% ============================================================
+erDiagram
+
+    usuarios {
+        uuid id PK "= auth.users.id"
+        text correo UK
+        text rol "admin | estilista"
+        boolean activo
+        timestamptz creado_en
+    }
+
+    profesionales {
+        uuid id PK
+        uuid usuario_id FK "opcional"
+        text nombre
+        text especialidad
+        boolean activo
+        timestamptz creado_en
+    }
+
+    servicios {
+        uuid id PK
+        text categoria
+        text nombre
+        text descripcion
+        int duracion_minutos
+        numeric precio
+        int buffer_minutos
+        boolean activo
+    }
+
+    profesional_servicios {
+        uuid profesional_id PK,FK
+        uuid servicio_id PK,FK
+    }
+
+    contactos {
+        uuid id PK
+        text telefono UK
+        text nombre
+        text cedula
+        text correo
+        text direccion
+        text notas
+        boolean bloqueado
+        boolean bot_activo
+        uuid profesional_asignada_id FK
+        text motivo_handoff
+        timestamptz handoff_en
+        jsonb slots_pendientes
+        timestamptz creado_en
+    }
+
+    horarios_laborales {
+        uuid id PK
+        uuid profesional_id FK
+        int dia_semana "0=dom .. 6=sab"
+        time hora_inicio
+        time hora_fin
+    }
+
+    bloqueos {
+        uuid id PK
+        uuid profesional_id FK
+        timestamptz inicia_en
+        timestamptz termina_en
+        text motivo
+    }
+
+    citas {
+        uuid id PK
+        uuid contacto_id FK
+        uuid profesional_id FK
+        uuid servicio_id FK
+        timestamptz inicia_en
+        timestamptz termina_en "incluye buffer"
+        text estado "pendiente|confirmada|cancelada|completada|no_asistio"
+        text origen "whatsapp|dashboard|manual"
+        numeric precio_cobrado
+        text notas
+        timestamptz creado_en
+        timestamptz actualizado_en
+    }
+
+    historial_citas {
+        uuid id PK
+        uuid cita_id FK
+        text accion
+        uuid usuario_responsable_id FK
+        timestamptz fecha
+        jsonb detalle
+    }
+
+    notificaciones {
+        uuid id PK
+        uuid cita_id FK
+        text tipo "recordatorio|confirmacion|cancelacion"
+        text canal
+        text estado "pendiente|enviado|fallido"
+        timestamptz programada_para
+        timestamptz enviada_en
+        timestamptz creada_en
+    }
+
+    info_negocio {
+        text clave PK
+        text valor
+        text descripcion
+    }
+
+    %% ---------- RELACIONES ----------
+    usuarios ||--o| profesionales : "tiene perfil de"
+    usuarios ||--o{ historial_citas : "responsable de"
+
+    profesionales ||--o{ profesional_servicios : "puede hacer"
+    servicios     ||--o{ profesional_servicios : "es hecho por"
+
+    profesionales ||--o{ horarios_laborales : "trabaja en"
+    profesionales ||--o{ bloqueos : "se ausenta en"
+    profesionales ||--o{ citas : "atiende"
+    profesionales ||--o{ contactos : "asignada (handoff)"
+
+    servicios  ||--o{ citas : "se brinda en"
+    contactos  ||--o{ citas : "reserva"
+
+    citas ||--o{ historial_citas : "registra cambios en"
+    citas ||--o{ notificaciones : "genera"

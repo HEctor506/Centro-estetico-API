@@ -1,0 +1,19 @@
+[project]
+name = "centro-estetico-api"
+version = "1.0.0"
+description = "REST API para la gestion de un centro estetico (FastAPI + Supabase)"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi[standard]",
+    "pydantic==2.13.4",
+    "pydantic[email]",
+    "python-dotenv==1.2.2",
+    "supabase==2.31.0",
+    "requests",
+]
+
+[tool.fastapi]
+entrypoint = "main:app"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

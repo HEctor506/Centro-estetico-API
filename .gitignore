@@ -1,0 +1,21 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Variables de entorno (¡nunca subir credenciales!)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# SO
+.DS_Store
+Thumbs.db
