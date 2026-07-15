@@ -1,9 +1,17 @@
-from fastapi import APIRouter, Depends, status
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, Form, status
 from supabase import Client
 
 from app import crud
 from app.database import get_supabase
-from app.models.schemas import NotificacionCreate, NotificacionUpdate
+from app.models.schemas import (
+    EstadoNotificacion,
+    NotificacionCreate,
+    NotificacionUpdate,
+    TipoNotificacion,
+)
 
 router = APIRouter(prefix="/notificaciones", tags=["Notificaciones"])
 TABLE = "notificacion"
@@ -25,6 +33,21 @@ def obtener_notificacion(notificacion_id: str, db: Client = Depends(get_supabase
 def crear_notificacion(
     notificacion: NotificacionCreate, db: Client = Depends(get_supabase)
 ):
+    return crud.create_row(db, TABLE, notificacion)
+
+
+@router.post(
+    "/form",
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear notificación (formulario)",
+)
+def crear_notificacion_form(
+    cita_id: Annotated[UUID, Form()],
+    tipo: Annotated[TipoNotificacion, Form()],
+    estado: Annotated[EstadoNotificacion, Form()] = EstadoNotificacion.pendiente,
+    db: Client = Depends(get_supabase),
+):
+    notificacion = NotificacionCreate(cita_id=cita_id, tipo=tipo, estado=estado)
     return crud.create_row(db, TABLE, notificacion)
 
 

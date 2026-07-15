@@ -1,9 +1,16 @@
-from fastapi import APIRouter, Depends, status
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, Form, status
 from supabase import Client
 
 from app import crud
 from app.database import get_supabase
-from app.models.schemas import HistorialCitaCreate, HistorialCitaUpdate
+from app.models.schemas import (
+    AccionHistorial,
+    HistorialCitaCreate,
+    HistorialCitaUpdate,
+)
 
 router = APIRouter(prefix="/historial-citas", tags=["Historial de citas"])
 TABLE = "historial_cita"
@@ -25,6 +32,25 @@ def obtener_historial(historial_id: str, db: Client = Depends(get_supabase)):
 def crear_historial(
     historial: HistorialCitaCreate, db: Client = Depends(get_supabase)
 ):
+    return crud.create_row(db, TABLE, historial)
+
+
+@router.post(
+    "/form",
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear registro de historial (formulario)",
+)
+def crear_historial_form(
+    cita_id: Annotated[UUID, Form()],
+    accion_realizada: Annotated[AccionHistorial, Form()],
+    usuario_responsable: Annotated[UUID, Form()],
+    db: Client = Depends(get_supabase),
+):
+    historial = HistorialCitaCreate(
+        cita_id=cita_id,
+        accion_realizada=accion_realizada,
+        usuario_responsable=usuario_responsable,
+    )
     return crud.create_row(db, TABLE, historial)
 
 

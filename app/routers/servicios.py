@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, status
+from decimal import Decimal
+from typing import Annotated, Optional
+
+from fastapi import APIRouter, Depends, Form, status
 from supabase import Client
 
 from app import crud
@@ -23,6 +26,27 @@ def obtener_servicio(servicio_id: str, db: Client = Depends(get_supabase)):
 
 @router.post("", status_code=status.HTTP_201_CREATED, summary="Crear servicio")
 def crear_servicio(servicio: ServicioCreate, db: Client = Depends(get_supabase)):
+    return crud.create_row(db, TABLE, servicio)
+
+
+@router.post(
+    "/form",
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear servicio (formulario)",
+)
+def crear_servicio_form(
+    nombre: Annotated[str, Form(max_length=100)],
+    duracion_minutos: Annotated[int, Form(gt=0)],
+    precio: Annotated[Decimal, Form(ge=0)],
+    descripcion: Annotated[Optional[str], Form()] = None,
+    db: Client = Depends(get_supabase),
+):
+    servicio = ServicioCreate(
+        nombre=nombre,
+        descripcion=descripcion or None,
+        duracion_minutos=duracion_minutos,
+        precio=precio,
+    )
     return crud.create_row(db, TABLE, servicio)
 
 
