@@ -98,3 +98,37 @@ INSERT INTO beauty_api.servicio(id,nombre,descripcion,duracion_minutos,precio) V
 INSERT INTO beauty_api.cliente(id,nombre_completo,telefono,email,observaciones) VALUES
 (gen_random_uuid(),'María Pérez','0999999999','maria@example.com',''),
 (gen_random_uuid(),'Juan López','0988888888','juan@example.com','');
+
+-- ---------------------------------------------------------------------------
+-- Alta automática de usuarios
+-- ---------------------------------------------------------------------------
+-- Cuando alguien se registra en Supabase Auth (auth.users), este trigger crea
+-- automáticamente su fila en beauty_api.usuario, evitando el paso manual.
+--
+-- SECURITY DEFINER: la función corre con los privilegios de su dueño (postgres,
+-- que tiene BYPASSRLS), por lo que puede insertar aunque las políticas RLS de
+-- la tabla usuario exijan id = auth.uid().
+CREATE OR REPLACE FUNCTION beauty_api.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = beauty_api, public
+AS $$
+BEGIN
+  INSERT INTO beauty_api.usuario (id, rol, activo)
+  VALUES (
+    NEW.id,
+    -- Toma el rol del metadata del registro; si no viene, usa 'Admin'
+    COALESCE(NEW.raw_user_meta_data->>'rol', 'Admin'),
+    TRUE
+  );
+  RETURN NEW;
+END;
+$$;
+
+ALTER FUNCTION beauty_api.handle_new_user() OWNER TO postgres;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION beauty_api.handle_new_user();
