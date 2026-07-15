@@ -90,6 +90,21 @@ FOR ALL TO authenticated USING(true) WITH CHECK(true);
 CREATE POLICY historial_auth ON beauty_api.historial_cita
 FOR ALL TO authenticated USING(true) WITH CHECK(true);
 
+-- ---------------------------------------------------------------------------
+-- Permisos (GRANT) para los roles de la API de Supabase
+-- ---------------------------------------------------------------------------
+-- En un esquema distinto de 'public', Supabase NO otorga permisos
+-- automáticamente. Sin esto, PostgREST devuelve "permission denied for schema".
+-- Los GRANT dan acceso al esquema/tablas; la seguridad por fila la sigue
+-- aplicando RLS (las políticas de arriba).
+GRANT USAGE ON SCHEMA beauty_api TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA beauty_api TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA beauty_api TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA beauty_api
+  GRANT ALL ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA beauty_api
+  GRANT ALL ON SEQUENCES TO anon, authenticated;
+
 INSERT INTO beauty_api.servicio(id,nombre,descripcion,duracion_minutos,precio) VALUES
 (gen_random_uuid(),'Corte','Corte de cabello',45,15.00),
 (gen_random_uuid(),'Tinte','Coloración',120,45.00),
